@@ -1,0 +1,81 @@
+/* 
+  Localizable.strings
+  tdtalk2dev
+
+  Created by Fujiwara on 2015/07/31.
+  Copyright (c) 2015年 fsap. All rights reserved.
+*/
+
+"dialog_title_error" = "Error";
+"dialog_title_notice" = "Confirm";
+"dialog_title_create_folder" = "Create New Folder";
+"dialog_title_edit_folder" = "Edit Folder";
+
+"dialog_msg_delete" = "Delete book?";
+"dialog_msg_create_new_folder" = "Input new folder name.";
+"dialog_msg_edit_folder" = "Input folder name.";
+"dialog_msg_folder_created" = "New folder created.";
+"dialog_msg_folder_edited" = "Folder edited.";
+"dialog_msg_copy_done" = "Copy done.";
+"dialog_msg_cut_done" = "Cut done.";
+"dialog_msg_confirm_purchase" = "Purchase  Premium Version";
+
+"dialog_ok" = "OK";
+"dialog_cancel" = "Cancel";
+"dialog_create" = "Create";
+"dialog_edit" = "Edit Complete";
+"dialog_purchase" = "Purchase";
+"dialog_restore" = "Restore before purchase";
+
+"button_title_cancel_loading" = "Cancel";
+"button_title_canceling" = "Canceling...";
+"button_title_help" = "Help";
+
+"new_folder_button" = "Create New Folder";
+"paste_button" = "Paste";
+"purchase_button" = "Purchase";
+
+"cell_action_titile_delete" = "Delete";
+"cell_action_titile_copy" = "Copy";
+"cell_action_titile_cut" = "Cut";
+"cell_action_titile_change_title" = "Change Title";
+
+"link_help" = "http://www.nbs.co.jp/ios/english/epubtalk/use.htm";
+
+"error_msg_101" = "Failed to get file.";
+"error_msg_102" = "File not found.";
+"error_msg_103" = "Unsupported file.";
+"error_msg_104" = "Failed to load file";
+"error_msg_105" = "Already imported.";
+"error_msg_106" = "Failed to save file.";
+"error_msg_107" = "Failed to delete file.";
+"error_msg_108" = "Meta data not found.";
+"error_msg_109" = "Navigation file not found.";
+"error_msg_110" = "Cotents file not found.";
+
+"error_msg_301" = "Input name already exists.";
+"error_msg_302" = "Folder not empty.";
+"error_msg_303" = "Failed to move book.";
+"error_msg_304" = "Same book already exists.";
+
+"error_msg_401" = "In App Purchase disabled.";
+"error_msg_402" = "Failed to purchase.";
+"error_msg_403" = "Failed to restore.";
+"error_msg_404" = "Purchase canceled.";
+
+"error_msg_501" = "Input is invalid.";
+"error_msg_502" = "Invalid ID.";
+"error_msg_503" = "Cannot use blank name.";
+"error_msg_504" = "Too long name.";
+"error_msg_505" = "Input is invalid.";
+
+"msg_import_success" = "Import completed.";
+"msg_loading_import" = "Loading the book data...";
+"msg_loading_purchase" = "Purchasing...";
+"msg_complete_purchase" = "Complete to purchase.";
+"msg_complete_restore" = "Complete to restore.";
+"msg_already_purchase" = "Already purchased.";
+
+"row_action_delete" = "Delete";
+"label_folder" = "(Folder)";
+"page_title_book_list" = "Book List";

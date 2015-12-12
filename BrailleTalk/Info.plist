@@ -9,26 +9,26 @@
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
-				<string>zip</string>
+				<string>exe</string>
 				<string>epub</string>
 			</array>
 			<key>CFBundleTypeIconFiles</key>
 			<array/>
 			<key>CFBundleTypeMIMETypes</key>
 			<array>
-				<string>application/epub+zip</string>
 				<string>application/zip</string>
 				<string>application/x-zip</string>
 				<string>application/x-zip-compressed</string>
 				<string>application/x-msdownload</string>
 				<string>application/octet-stream</string>
+				<string>application/x-exe</string>
 			</array>
 			<key>CFBundleTypeName</key>
 			<string>EPUB Talk</string>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
 				<string>ZIP</string>
-				<string>EPUB</string>
+				<string>EXE</string>
 			</array>
 			<key>CFBundleTypeRole</key>
 			<array>
@@ -38,7 +38,7 @@
 			<array>
 				<string>com.pkware.zip-archive</string>
 				<string>org.gnu.gnu-zip-archive</string>
-				<string>org.idpf.epub-container</string>
+				<string>com.microsoft.windows-executable</string>
 			</array>
 		</dict>
 	</array>

@@ -9,8 +9,18 @@
 #ifndef EpubTalk_BridgeHeader_h
 #define EpubTalk_BridgeHeader_h
 
+#define EnableBraille 1
+
 #import "SSZipArchive.h"
+
+#ifdef EnableEpub
 #import "file.h"
 #import "brlbuf.h"
+#endif
+
+#ifdef EnableBraille
+#import "bfile.h"
+#import "bbrlbuf.h"
+#endif
 
 #endif

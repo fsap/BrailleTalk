@@ -104,7 +104,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let queue = dispatch_queue_create("import_book", nil)
         dispatch_async(queue, { () -> Void in
             // インポート
-            bookService.importDaisy(url, didSuccess: { () -> Void in
+            bookService.importBraille(url, didSuccess: { () -> Void in
                 // 完了
                 self.loadingFlg = false
                 

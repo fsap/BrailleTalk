@@ -84,6 +84,90 @@ class BookService {
         return TTErrorCode.Normal;
     }
     
+    func importBraille(sourceUrl: NSURL, didSuccess:(() -> Void), didFailure:((errorCode: TTErrorCode) -> Void))->Void {
+        
+        self.keepLoading = true
+        
+        let filename: String = sourceUrl.lastPathComponent!.stringByRemovingPercentEncoding!
+        let tmpUrl: NSURL = FileManager.getTmpDir()
+        let expandUrl: NSURL = tmpUrl.URLByAppendingPathComponent(filename).URLByDeletingPathExtension!
+        
+        // 外部から渡ってきたファイルのパス ex) AppRoot/Documents/Inbox/What_Is_HTML5_.zip
+        let sourcePath: String = sourceUrl.path!
+        // 作業用ディレクトリ ex) AppRoot/tmp/
+        let tmpPath: String = tmpUrl.path!
+        // 作業ファイル展開用ディレクトリ ex) AppRoot/tmp/What_Is_HTML5_
+        let expandPath: String = expandUrl.path!
+        
+        if Constants.kImportableExtensions.contains(sourceUrl.pathExtension!) {
+            
+            // 圧縮ファイル展開
+            if !(self.fileManager.unzip(sourcePath, expandPath: expandPath)) {
+                LogE(NSString(format: "Unable to expand path:%@ file:%@", sourceUrl, filename))
+                deInitImport([sourcePath], errorCode: TTErrorCode.UnsupportedFileType, didSuccess: didSuccess, didFailure: didFailure)
+                return
+            }
+            
+        } else {
+            LogE(NSString(format: "Unable to expand:%@", filename))
+            deInitImport([sourcePath], errorCode: TTErrorCode.UnsupportedFileType, didSuccess: didSuccess, didFailure: didFailure)
+            return
+        }
+        
+        Log(NSString(format: "tmp_dir:%@", try! self.fileManager.fileManager.contentsOfDirectoryAtPath(tmpPath)))
+        
+        if !keepLoading {
+            deInitImport([sourcePath], errorCode: TTErrorCode.Normal, didSuccess: didSuccess, didFailure: didFailure)
+            return
+        }
+        
+        // 初期化
+        self.fileManager.initImport()
+        
+        // 拡張子のチェック
+        if !self.validBrailleExtension(expandUrl) {
+            deInitImport([sourcePath], errorCode: TTErrorCode.UnsupportedFileType, didSuccess: didSuccess, didFailure: didFailure)
+            return
+        }
+        
+        let brailleFiles: [NSURL]? = self.getBrailleFiles(expandUrl)
+        if brailleFiles == nil {
+            deInitImport([sourcePath], errorCode: TTErrorCode.UnsupportedFileType, didSuccess: didSuccess, didFailure: didFailure)
+            return
+        }
+        Log(NSString(format: "files:%@", brailleFiles!))
+        
+        //読み込み
+        let saveFilePath = self.fileManager.loadBetFiles(brailleFiles!, saveUrl: expandUrl)
+        if !self.keepLoading {
+            self.deInitImport([sourcePath, expandPath], errorCode: TTErrorCode.Normal, didSuccess: didSuccess, didFailure: didFailure)
+            return
+        }
+        if saveFilePath == "" {
+            self.deInitImport([sourcePath, expandPath], errorCode: TTErrorCode.FailedToLoadFile, didSuccess: didSuccess, didFailure: didFailure)
+            return
+        }
+        
+        // 本棚へ登録
+        let result = self.fileManager.saveToBook(saveFilePath)
+        if result != TTErrorCode.Normal {
+            self.deInitImport([sourcePath, expandPath], errorCode: result, didSuccess: didSuccess, didFailure: didFailure)
+            return
+        }
+        
+        // 図書情報をDBに保存
+        let ret = self.saveBook(NSURL(fileURLWithPath: saveFilePath))
+        if ret != TTErrorCode.Normal {
+            self.deInitImport([sourcePath, expandPath], errorCode: ret, didSuccess: didSuccess, didFailure: didFailure)
+            return
+        }
+        
+        // 終了処理
+        self.deInitImport([sourcePath, expandPath], errorCode: TTErrorCode.Normal, didSuccess: didSuccess, didFailure: didFailure)
+    }
+    
+    
+#if EnableEpub
     //
     // ファイルの取り込み
     //
@@ -187,6 +271,7 @@ class BookService {
             self.deInitImport([sourcePath, expandPath], errorCode: errorCode, didSuccess: didSuccess, didFailure: didFailure)
         })
     }
+#endif
     
     //
     // 読み込みキャンセル
@@ -216,6 +301,119 @@ class BookService {
             result.append(file)
         }
         return result
+    }
+    
+    //
+    // ディレクトリ内の点字ファイル拡張子チェック
+    // 点字拡張子がある場合、全て同じ拡張子になっているか検査する
+    //
+    func validBrailleExtension(targetUrl: NSURL)->Bool {
+        
+        // 対象ディレクトリがない
+        if !self.fileManager.exists(targetUrl.path!) {
+            LogE(NSString(format: "Search target directory not found. dir:%@", targetUrl.path!))
+            return false
+        }
+        
+        var baseExt: String?
+        do {
+            for file: String in try self.fileManager.fileManager.contentsOfDirectoryAtPath(targetUrl.path!) {
+                Log(NSString(format: "file:%@", file))
+                
+                // 拡張子が取得できない
+                let ext: String? = NSURL(fileURLWithPath: file).pathExtension?.lowercaseString
+                if ext == nil {
+                    continue
+                }
+                
+                // ファイルがあるか
+                var isDir = ObjCBool(false)
+                if (!self.fileManager.fileManager.fileExistsAtPath(targetUrl.URLByAppendingPathComponent(file).path!, isDirectory: &isDir)) {
+                    continue
+                }
+                
+                // システムファイルはスキップ
+                if self.fileManager.isSystemFile(file) {
+                    continue
+                }
+                
+                // ディレクトリの場合は再帰的にチェック
+                if isDir {
+                    if !self.validBrailleExtension(targetUrl.URLByAppendingPathComponent(file)) {
+                        return false
+                    }
+                    continue
+                }
+                
+                // 点字拡張子でない
+                if !Constants.kBrailleFileExtensions.contains(ext!) {
+                    Log(NSString(format: "not braille extension. ext:%@", ext!))
+                    continue
+                }
+                
+                if baseExt != nil && baseExt != ext {
+                    return false
+                }
+                baseExt = ext
+            }
+        } catch let error as NSError {
+            LogE(NSString(format: "An error occurred. [%d][%@]", error.code, error.description))
+            return false
+        }
+        
+        return true
+    }
+    
+    //
+    // ディレクトリ内から点字ファイルを取得する
+    //
+    func getBrailleFiles(targetUrl: NSURL)->[NSURL]? {
+        
+        var files: [NSURL] = []
+        do {
+            for file: String in try self.fileManager.fileManager.contentsOfDirectoryAtPath(targetUrl.path!) {
+                
+                // 拡張子が取得できない
+                let ext: String? = NSURL(fileURLWithPath: file).pathExtension?.lowercaseString
+                if ext == nil {
+                    continue
+                }
+                
+                // ファイルがあるか
+                var isDir = ObjCBool(false)
+                if (!self.fileManager.fileManager.fileExistsAtPath(targetUrl.URLByAppendingPathComponent(file).path!, isDirectory: &isDir)) {
+                    continue
+                }
+                
+                // システムファイルはスキップ
+                if self.fileManager.isSystemFile(file) {
+                    continue
+                }
+
+                // ディレクトリの場合は再帰的にチェック
+                if isDir {
+                    if let filesInDir: [NSURL]? = self.getBrailleFiles(targetUrl.URLByAppendingPathComponent(file)) {
+                        files += filesInDir!
+                    }
+                    continue
+                }
+                
+                // 点字拡張子でない
+                if !Constants.kBrailleFileExtensions.contains(ext!) {
+                    continue
+                }
+                
+                files.append(targetUrl.URLByAppendingPathComponent(file))
+            }
+            
+        } catch let error as NSError {
+            LogE(NSString(format: "An error occurred. [%d][%@]", error.code, error.description))
+            return nil
+        }
+        
+        return files.sort({ (s1: NSURL?, s2: NSURL?) -> Bool in
+            return s1?.path < s2?.path
+        })
     }
     
     
@@ -362,6 +560,34 @@ class BookService {
         book.language = epub.metadata.language
         book.filename = saveFileUrl.URLByDeletingPathExtension!.lastPathComponent!
 //        book.sort_num = nil
+        book.trace()
+        
+        // 表示オブジェクトとして登録
+        let newShelfObject: ShelfObjectEntity = self.dataManager.getEntity(DataManager.Const.kShelfObjectEntityName) as! ShelfObjectEntity
+        newShelfObject.type = ShelfObjectTypes.Book.rawValue
+        newShelfObject.folder_id = SystemFolderID.Root.rawValue
+        newShelfObject.object_id = book.book_id
+        newShelfObject.name = book.title
+        newShelfObject.sort_num = 1
+        newShelfObject.create_time = NSDate()
+        newShelfObject.trace()
+        
+        return self.dataManager.save()
+    }
+    
+    func saveBook(saveFileUrl: NSURL)->TTErrorCode {
+        // 表示オブジェクトの並び順更新
+        for shelfObject in self.getRootShelfObjects() {
+            let sort: Int = shelfObject.sort_num.integerValue
+            shelfObject.sort_num = sort+1
+            shelfObject.trace()
+        }
+        
+        // 図書本体の登録
+        let book: BookEntity = self.dataManager.getEntity(DataManager.Const.kBookEntityName) as! BookEntity
+        book.book_id = DataManager.createUUID()
+        book.title = saveFileUrl.URLByDeletingPathExtension!.lastPathComponent!
+        book.filename = saveFileUrl.URLByDeletingPathExtension!.lastPathComponent!
         book.trace()
         
         // 表示オブジェクトとして登録

@@ -238,7 +238,63 @@ class FileManager: NSObject {
             removeFile(path)
         }
     }
+    
+    //
+    // bes, betファイル読み込み
+    //
+    func loadBetFiles(files: [NSURL], saveUrl: NSURL)->String {
+        
+        // コンテンツ読み出し
+        let brllist:BrlBuffer = BrlBuffer()
+        brllist.Setinit()
+        let file = File()
+        file.DataSet(brllist)
 
+        // 拡張子の決定
+        let ext: String = (files.first?.pathExtension)!.lowercaseString
+        for (index, url) in files.enumerate() {
+            Log(NSString(format: "load:%@", url.path!))
+            if !keepLoading {
+                keepLoading = true
+                return ""
+            }
+            
+            let mode :Int32 = index == 0 ? 0 : 1
+
+            if ext == "bes" {
+                file.LoadBetFile(url.path!, form: 4, readMode: mode)
+            }
+            else if ext == "bet" {
+                file.LoadBetFile(url.path!, form: 5, readMode: mode)
+            }
+            else if ext == "bs" {
+                file.LoadBsFile(url.path!, readMode: mode)
+            }
+            else if ext == "bse" {
+                file.LoadBseFile(url.path!, readMode: mode)
+            }
+            else if ext == "brf" {
+                file.LoadBrfFile(url.path!, readMode: mode)
+            }
+        }
+        
+        // 保存
+        let titleBaseName = saveUrl.URLByDeletingPathExtension?.lastPathComponent!
+        let saveFilePath:String = saveUrl.URLByAppendingPathComponent(titleBaseName! + ".bs").path!
+        Log(NSString(format: "base name:%@ save_to:%@", titleBaseName!, saveFilePath))
+
+        if  file.SaveBsFile(saveFilePath) < 0 {
+            LogE(NSString(format: "Failed to save bs file. save_file[%@]", saveFilePath))
+            keepLoading = true
+            return ""
+        }
+        keepLoading = true
+        
+        return saveFilePath
+    }
+    
+
+#if EnableEpub
     //
     // XMLファイルの読み込み
     //
@@ -348,6 +404,7 @@ class FileManager: NSObject {
         
         return saveFilePath
     }
+#endif
     
     func cancelLoad() {
         keepLoading = false

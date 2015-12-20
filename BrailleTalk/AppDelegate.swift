@@ -38,7 +38,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(application: UIApplication, handleOpenURL url: NSURL) -> Bool {
         Log(NSString(format: "lifecycle:handle_open_url:%@", url.lastPathComponent!))
         // Override point for customization after application launch.
-        
+        PurchaseService.sharedInstance.startObserver()
+
         if !self.startImportBook(url) {
             return false
         }
@@ -67,6 +68,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillTerminate(application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
         // Saves changes in the application's managed object context before the application terminates.
+        PurchaseService.sharedInstance.endObserver()
     }
 
     ///

@@ -75,6 +75,6 @@ struct Constants {
     /**
      * 課金関連
      */
-    static let kInAppPurchaseProductiId = "jp.fsap.epubtalkdev.product"
+    static let kInAppPurchaseProductiId = "jp.fsap.brailletalkdev.product"
     static let kSavePurchaseStatusKey = "purchase_status"
 }

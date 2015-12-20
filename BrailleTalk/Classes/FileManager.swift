@@ -253,13 +253,13 @@ class FileManager: NSObject {
         // 拡張子の決定
         let ext: String = (files.first?.pathExtension)!.lowercaseString
         for (index, url) in files.enumerate() {
-            Log(NSString(format: "load:%@", url.path!))
             if !keepLoading {
                 keepLoading = true
                 return ""
             }
             
             let mode :Int32 = index == 0 ? 0 : 1
+            Log(NSString(format: "mode:%d load:%@", mode, url.path!))
 
             if ext == "bes" {
                 file.LoadBetFile(url.path!, form: 4, readMode: mode)
